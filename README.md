@@ -3,24 +3,24 @@
 Use the volume-up button on a DJI Mic receiver as a push button for
 [Handy](https://handy.computer/) dictation on macOS.
 
-This installs a small macOS `hidutil` mapping that converts the DJI Mic
-receiver's consumer volume-up event into `F18`, then configures Handy to use
+This installs a small background macOS helper that watches the DJI Mic
+receiver's consumer volume-up event, emits `fn+F18`, and configures Handy to use
 `fn+F18` for transcription.
 
 ## What This Is For
 
 Handy is a local speech-to-text app for macOS. The DJI Mic receiver is a
-convenient physical button, but macOS normally treats its button as a media
-volume key. This repo makes that button usable as a dedicated dictation trigger
-without changing your main keyboard.
+convenient physical button, but macOS normally treats its button as a volume
+key. This repo makes that button usable as a dedicated dictation trigger without
+changing your main keyboard.
 
-The default mapping is scoped to the DJI Mic receiver:
+The helper is scoped to the DJI Mic receiver:
 
 - Vendor ID: `0x2ca3`
 - Product ID: `0x4008`
 - HID usage: consumer control
-- Source key: volume up
-- Destination key: `F18`
+- Source button: volume up
+- Handy shortcut emitted: `fn+F18`
 
 ## Requirements
 
@@ -38,18 +38,31 @@ cd handy-dji-mic-trigger
 ./install.sh
 ```
 
-Then open Handy once and allow any macOS permissions it requests, such as
-microphone, accessibility, or input monitoring.
+Then allow the helper in:
+
+```text
+System Settings > Privacy & Security > Accessibility
+```
+
+If macOS also lists `Handy DJI Mic Trigger` under Input Monitoring, allow it
+there too.
+
+After granting permission, restart the LaunchAgent:
+
+```bash
+launchctl kickstart -k "gui/$(id -u)/com.handy-dji-mic-trigger.remap"
+```
 
 ## What The Installer Does
 
 The installer:
 
-1. Detects the DJI Mic receiver in `hidutil list`.
+1. Builds a small Swift helper app in
+   `~/Applications/Handy DJI Mic Trigger.app`.
 2. Installs `~/.local/bin/handy-dji-f18-remap.sh`.
 3. Installs and loads a per-user LaunchAgent:
    `~/Library/LaunchAgents/com.handy-dji-mic-trigger.remap.plist`.
-4. Applies the mapping immediately.
+4. Starts the helper in the background.
 5. Backs up Handy's settings file, if present.
 6. Sets Handy's transcribe shortcut to `fn+f18`.
 7. Sets Handy's selected microphone to `Wireless Microphone RX`, if Handy
@@ -71,24 +84,19 @@ You can inspect devices with:
 hidutil list | grep -i "Wireless Microphone"
 ```
 
+If your receiver reports a different device name, the vendor and product IDs
+are what matter.
+
 ## Uninstall
 
 ```bash
 ./uninstall.sh
 ```
 
-This unloads and removes the LaunchAgent and remap script. It does not uninstall
-Handy and does not delete Handy settings backups.
+This unloads and removes the LaunchAgent, remap script, helper binary, and app
+bundle. It does not uninstall Handy and does not delete Handy settings backups.
 
 ## Troubleshooting
-
-Check whether the mapping is active:
-
-```bash
-hidutil property \
-  --matching '{"VendorID":0x2ca3,"ProductID":0x4008,"PrimaryUsagePage":12,"PrimaryUsage":1}' \
-  --get UserKeyMapping
-```
 
 Check the LaunchAgent:
 
@@ -96,10 +104,19 @@ Check the LaunchAgent:
 launchctl print "gui/$(id -u)/com.handy-dji-mic-trigger.remap"
 ```
 
+Check helper logs:
+
+```bash
+tail -f /tmp/com.handy-dji-mic-trigger.remap.err
+```
+
+If the log says `failed to create CGEvent tap`, macOS has not granted
+Accessibility or Input Monitoring permission to `Handy DJI Mic Trigger` yet.
+
 If Handy does not respond, confirm these Handy settings:
 
 - Transcribe shortcut: `fn+F18`
 - Microphone: `Wireless Microphone RX`
 
-Also confirm macOS permissions for Handy in System Settings.
-
+Also confirm macOS permissions for both Handy and `Handy DJI Mic Trigger` in
+System Settings.

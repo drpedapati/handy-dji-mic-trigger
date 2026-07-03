@@ -4,18 +4,17 @@ set -euo pipefail
 LABEL="com.handy-dji-mic-trigger.remap"
 VENDOR_ID="${DJI_VENDOR_ID:-0x2ca3}"
 PRODUCT_ID="${DJI_PRODUCT_ID:-0x4008}"
-PRIMARY_USAGE_PAGE="${DJI_PRIMARY_USAGE_PAGE:-12}"
-PRIMARY_USAGE="${DJI_PRIMARY_USAGE:-1}"
-SRC_KEY="${DJI_SOURCE_KEY:-0x000C00E9}"
-DST_KEY="${DJI_DEST_KEY:-0x0007006D}"
 MIC_NAME="${HANDY_MICROPHONE_NAME:-Wireless Microphone RX}"
 HANDY_BUNDLE="/Applications/Handy.app"
 HANDY_SETTINGS="$HOME/Library/Application Support/com.pais.handy/settings_store.json"
 BIN_DIR="$HOME/.local/bin"
 SCRIPT_PATH="$BIN_DIR/handy-dji-f18-remap.sh"
+HELPER_PATH="$BIN_DIR/handy-dji-mic-trigger"
+APP_DIR="$HOME/Applications/Handy DJI Mic Trigger.app"
+APP_CONTENTS="$APP_DIR/Contents"
+APP_MACOS="$APP_CONTENTS/MacOS"
+APP_EXECUTABLE="$APP_MACOS/Handy DJI Mic Trigger"
 LAUNCH_AGENT="$HOME/Library/LaunchAgents/$LABEL.plist"
-MATCHING="{\"VendorID\":$VENDOR_ID,\"ProductID\":$PRODUCT_ID,\"PrimaryUsagePage\":$PRIMARY_USAGE_PAGE,\"PrimaryUsage\":$PRIMARY_USAGE}"
-MAPPING="{\"UserKeyMapping\":[{\"HIDKeyboardModifierMappingSrc\":$SRC_KEY,\"HIDKeyboardModifierMappingDst\":$DST_KEY}]}"
 
 need() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -82,13 +81,53 @@ PY
 
 write_remap_script() {
   mkdir -p "$BIN_DIR"
+  xcrun swiftc "$(dirname "$0")/src/HandyDjiMicTrigger.swift" -o "$HELPER_PATH"
+  chmod +x "$HELPER_PATH"
+
+  mkdir -p "$APP_MACOS"
+  cp "$HELPER_PATH" "$APP_EXECUTABLE"
+  chmod +x "$APP_EXECUTABLE"
+
+  cat > "$APP_CONTENTS/Info.plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDisplayName</key>
+  <string>Handy DJI Mic Trigger</string>
+  <key>CFBundleExecutable</key>
+  <string>Handy DJI Mic Trigger</string>
+  <key>CFBundleIdentifier</key>
+  <string>$LABEL</string>
+  <key>CFBundleName</key>
+  <string>Handy DJI Mic Trigger</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>0.1.0</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
+  <key>LSBackgroundOnly</key>
+  <true/>
+  <key>NSAppleEventsUsageDescription</key>
+  <string>Used to translate the DJI Mic receiver button into a Handy shortcut.</string>
+  <key>NSInputMonitoringUsageDescription</key>
+  <string>Used to detect the DJI Mic receiver button and translate it into fn+F18 for Handy.</string>
+</dict>
+</plist>
+EOF
+  plutil -lint "$APP_CONTENTS/Info.plist" >/dev/null
+  codesign --force --sign - "$APP_DIR" >/dev/null 2>&1 || true
+
   cat > "$SCRIPT_PATH" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
 
-/usr/bin/hidutil property \\
-  --matching '$MATCHING' \\
-  --set '$MAPPING'
+export DJI_VENDOR_ID='$VENDOR_ID'
+export DJI_PRODUCT_ID='$PRODUCT_ID'
+
+exec '$APP_EXECUTABLE'
 EOF
   chmod +x "$SCRIPT_PATH"
 }
@@ -128,16 +167,18 @@ load_launch_agent() {
 }
 
 main() {
-  need hidutil
   need launchctl
   need plutil
   need /usr/bin/python3
+  need xcrun
 
   install_handy_if_missing
 
-  if ! hidutil list | grep -qi "Wireless Microphone"; then
-    echo "Warning: no device named Wireless Microphone is visible in hidutil list."
-    echo "The mapping will still be installed and will apply when the matching device is connected."
+  if system_profiler SPUSBDataType 2>/dev/null | grep -qi "Wireless Microphone"; then
+    :
+  else
+    echo "Warning: no USB device named Wireless Microphone is visible."
+    echo "The trigger will still be installed and will work when the receiver is connected."
   fi
 
   write_remap_script
@@ -147,8 +188,9 @@ main() {
 
   echo
   echo "Installed Handy DJI Mic Trigger."
-  echo "Press the DJI Mic receiver volume-up button to send F18 to Handy."
+  echo "Allow 'Handy DJI Mic Trigger' in System Settings > Privacy & Security > Accessibility."
+  echo "If macOS also lists it under Input Monitoring, allow it there too."
+  echo "Then press the DJI Mic receiver volume-up button to send fn+F18 to Handy."
 }
 
 main "$@"
-
