@@ -9,7 +9,6 @@ HANDY_BUNDLE="/Applications/Handy.app"
 HANDY_SETTINGS="$HOME/Library/Application Support/com.pais.handy/settings_store.json"
 BIN_DIR="$HOME/.local/bin"
 SCRIPT_PATH="$BIN_DIR/handy-dji-f18-remap.sh"
-HELPER_PATH="$BIN_DIR/handy-dji-mic-trigger"
 APP_DIR="$HOME/Applications/Handy DJI Mic Trigger.app"
 APP_CONTENTS="$APP_DIR/Contents"
 APP_MACOS="$APP_CONTENTS/MacOS"
@@ -79,13 +78,10 @@ PY
   echo "Configured Handy microphone: $MIC_NAME"
 }
 
-write_remap_script() {
+write_helper_app() {
   mkdir -p "$BIN_DIR"
-  xcrun swiftc "$(dirname "$0")/src/HandyDjiMicTrigger.swift" -o "$HELPER_PATH"
-  chmod +x "$HELPER_PATH"
-
   mkdir -p "$APP_MACOS"
-  cp "$HELPER_PATH" "$APP_EXECUTABLE"
+  xcrun swiftc "$(dirname "$0")/src/HandyDjiMicTrigger.swift" -o "$APP_EXECUTABLE"
   chmod +x "$APP_EXECUTABLE"
 
   cat > "$APP_CONTENTS/Info.plist" <<EOF
@@ -181,7 +177,7 @@ main() {
     echo "The trigger will still be installed and will work when the receiver is connected."
   fi
 
-  write_remap_script
+  write_helper_app
   write_launch_agent
   load_launch_agent
   configure_handy_settings

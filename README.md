@@ -59,10 +59,10 @@ The installer:
 
 1. Builds a small Swift helper app in
    `~/Applications/Handy DJI Mic Trigger.app`.
-2. Installs `~/.local/bin/handy-dji-f18-remap.sh`.
+2. Installs a wrapper script at `~/.local/bin/handy-dji-f18-remap.sh`.
 3. Installs and loads a per-user LaunchAgent:
    `~/Library/LaunchAgents/com.handy-dji-mic-trigger.remap.plist`.
-4. Starts the helper in the background.
+4. Starts the helper in the background through the wrapper script.
 5. Backs up Handy's settings file, if present.
 6. Sets Handy's transcribe shortcut to `fn+f18`.
 7. Sets Handy's selected microphone to `Wireless Microphone RX`, if Handy
@@ -93,7 +93,7 @@ are what matter.
 ./uninstall.sh
 ```
 
-This unloads and removes the LaunchAgent, remap script, helper binary, and app
+This unloads and removes the LaunchAgent, wrapper script, and helper app
 bundle. It does not uninstall Handy and does not delete Handy settings backups.
 
 ## Troubleshooting
