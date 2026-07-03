@@ -1,5 +1,9 @@
 # Handy DJI Mic Trigger
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![Platform: macOS](https://img.shields.io/badge/platform-macOS-lightgrey.svg)
+![Language: Swift](https://img.shields.io/badge/language-Swift-orange.svg)
+
 Use the volume-up button on a DJI Mic receiver as a push button for
 [Handy](https://handy.computer/) dictation on macOS.
 
