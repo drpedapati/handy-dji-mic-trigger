@@ -38,14 +38,15 @@ cd handy-dji-mic-trigger
 ./install.sh
 ```
 
-Then allow the helper in:
+Then allow `Handy DJI Mic Trigger` in both macOS privacy panes:
 
 ```text
 System Settings > Privacy & Security > Accessibility
+System Settings > Privacy & Security > Input Monitoring
 ```
 
-If macOS also lists `Handy DJI Mic Trigger` under Input Monitoring, allow it
-there too.
+Use the app bundle at `~/Applications/Handy DJI Mic Trigger.app` if you need to
+add it manually.
 
 After granting permission, restart the LaunchAgent:
 
@@ -110,8 +111,8 @@ Check helper logs:
 tail -f /tmp/com.handy-dji-mic-trigger.remap.err
 ```
 
-If the log says `failed to create CGEvent tap`, macOS has not granted
-Accessibility or Input Monitoring permission to `Handy DJI Mic Trigger` yet.
+If the log says `failed to create CGEvent tap`, macOS has not granted both
+Accessibility and Input Monitoring permission to `Handy DJI Mic Trigger` yet.
 
 If Handy does not respond, confirm these Handy settings:
 
@@ -119,4 +120,5 @@ If Handy does not respond, confirm these Handy settings:
 - Microphone: `Wireless Microphone RX`
 
 Also confirm macOS permissions for both Handy and `Handy DJI Mic Trigger` in
-System Settings.
+System Settings. `Handy DJI Mic Trigger` needs both Accessibility and Input
+Monitoring.

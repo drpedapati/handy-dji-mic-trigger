@@ -185,7 +185,7 @@ main() {
   echo
   echo "Installed Handy DJI Mic Trigger."
   echo "Allow 'Handy DJI Mic Trigger' in System Settings > Privacy & Security > Accessibility."
-  echo "If macOS also lists it under Input Monitoring, allow it there too."
+  echo "Also allow 'Handy DJI Mic Trigger' in System Settings > Privacy & Security > Input Monitoring."
   echo "Then press the DJI Mic receiver volume-up button to send fn+F18 to Handy."
 }
 
