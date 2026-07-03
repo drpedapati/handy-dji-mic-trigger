@@ -184,8 +184,18 @@ main() {
 
   echo
   echo "Installed Handy DJI Mic Trigger."
-  echo "Allow 'Handy DJI Mic Trigger' in System Settings > Privacy & Security > Accessibility."
-  echo "Also allow 'Handy DJI Mic Trigger' in System Settings > Privacy & Security > Input Monitoring."
+  echo
+  echo "Required macOS permissions:"
+  echo "  1. System Settings > Privacy & Security > Accessibility"
+  echo "  2. System Settings > Privacy & Security > Input Monitoring"
+  echo
+  echo "In both panes, enable: Handy DJI Mic Trigger"
+  echo "If you need to add it manually, choose:"
+  echo "  $APP_DIR"
+  echo
+  echo "After granting both permissions, restart the helper:"
+  echo "  launchctl kickstart -k \"gui/\$(id -u)/$LABEL\""
+  echo
   echo "Then press the DJI Mic receiver volume-up button to send fn+F18 to Handy."
 }
 

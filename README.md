@@ -22,6 +22,24 @@ The helper is scoped to the DJI Mic receiver:
 - Source button: volume up
 - Handy shortcut emitted: `fn+F18`
 
+## How It Works
+
+The DJI Mic receiver exposes its button to macOS as a consumer-control volume
+button. Handy needs a keyboard shortcut, not a media-volume event. This utility
+bridges that gap:
+
+1. An `IOHIDManager` listener watches only the DJI receiver's HID device ID.
+2. A `CGEventTap` sees the matching macOS media-key event.
+3. The helper only translates the media event when it just saw the DJI HID
+   event, so normal keyboard volume keys are left alone.
+4. The helper suppresses the original media-key event and posts `fn+F18`.
+5. Handy is configured to use `fn+F18` as its Transcribe shortcut.
+
+The helper is packaged as a small `.app` because macOS privacy permissions are
+granted to apps. The LaunchAgent starts a wrapper script, and the wrapper starts
+the app's executable. This is the path that gives the background helper a stable
+identity in System Settings.
+
 ## Requirements
 
 - macOS
@@ -54,6 +72,9 @@ After granting permission, restart the LaunchAgent:
 launchctl kickstart -k "gui/$(id -u)/com.handy-dji-mic-trigger.remap"
 ```
 
+Press the DJI Mic receiver volume-up button. Handy should start or stop
+transcription instead of changing the system volume.
+
 ## What The Installer Does
 
 The installer:
@@ -70,6 +91,20 @@ The installer:
    settings exist.
 
 No recordings, history databases, API keys, or personal vocabulary are copied.
+
+## Why These Pieces Exist
+
+- The `.app` bundle exists so macOS can show a friendly, stable item named
+  `Handy DJI Mic Trigger` in Privacy & Security.
+- Accessibility is required because the helper posts the synthetic `fn+F18`
+  shortcut to Handy.
+- Input Monitoring is required because the helper reads low-level input events
+  from the DJI receiver and the macOS media-key stream.
+- The LaunchAgent exists so the trigger starts automatically after login.
+- The wrapper script exists so environment variables such as `DJI_VENDOR_ID` and
+  `DJI_PRODUCT_ID` can be passed to the app cleanly.
+- Handy settings are updated so the generated `fn+F18` shortcut has something
+  useful to trigger.
 
 ## Custom Device IDs
 
